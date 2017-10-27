@@ -13,6 +13,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Default               (def)
 import           Data.Hashable              (Hashable, hash)
 import qualified Data.Map                   as Map
+import           Data.Semigroup             ((<>))
 import           Data.Text.Lazy             (Text)
 import qualified Data.Text.Lazy             as Text
 import           Data.Time                  (Day (..), LocalTime (..),
@@ -21,9 +22,9 @@ import           Data.Time.Clock.POSIX      (posixSecondsToUTCTime)
 import           GHC.Generics               (Generic)
 import           Text.ICalendar             (DTEnd (..), DTStamp (..),
                                              DTStart (..), DateTime (..),
-                                             Summary (..), UID (..),
-                                             VCalendar (..), VEvent (..),
-                                             printICalendar)
+                                             Description (..), Summary (..),
+                                             UID (..), VCalendar (..),
+                                             VEvent (..), printICalendar)
 
 main :: IO ()
 main = BS.putStrLn $
@@ -35,7 +36,12 @@ deriving instance Hashable Day
 deriving instance Hashable TimeOfDay
 
 data Class = Class
-    {day :: Day, subject :: Text, timeEnd :: TimeOfDay, timeStart :: TimeOfDay}
+    { day       :: Day
+    , subject   :: Text
+    , teacher   :: Text
+    , timeEnd   :: TimeOfDay
+    , timeStart :: TimeOfDay
+    }
     deriving (Generic, Hashable, Show)
 
 classes :: [Class]
@@ -46,6 +52,7 @@ classes =
         , timeEnd = TimeOfDay 21 30 0
         , subject =
             "Философские вопросы естествознания, социальных и гуманитарных наук"
+        , teacher = "Петруня О. Э."
         }
     | m :- d <-
         [ Nov :- 1, Nov :- 16, Nov :- 30
@@ -54,7 +61,8 @@ classes =
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
-classEvent cls@Class{day, subject, timeEnd, timeStart} = ((uid, Nothing), event)
+classEvent cls@Class{day, subject, teacher, timeEnd, timeStart} =
+    ((uid, Nothing), event)
   where
     uid = Text.pack $ show $ hash cls
     event = VEvent
@@ -71,9 +79,14 @@ classEvent cls@Class{day, subject, timeEnd, timeStart} = ((uid, Nothing), event)
             , summaryLanguage = def
             , summaryOther = def
             }
+        , veDescription = Just Description
+            { descriptionValue = "Преподаватель — " <> teacher
+            , descriptionAltRep = def
+            , descriptionLanguage = def
+            , descriptionOther = def
+            }
         , veClass = def
         , veCreated = def
-        , veDescription = def
         , veGeo = def
         , veLastMod = def
         , veLocation = def
