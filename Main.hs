@@ -4,7 +4,10 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE NamedFieldPuns     #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE PatternSynonyms    #-}
 {-# LANGUAGE StandaloneDeriving #-}
+
+module Main (main, Month (..)) where
 
 import qualified Data.ByteString.Lazy.Char8 as BS
 import           Data.Default               (def)
@@ -38,12 +41,16 @@ data Class = Class
 classes :: [Class]
 classes =
     [ Class
-        { day = fromGregorian 2017 11 1
+        { day = fromGregorian 2017 (monthNumber m) d
         , timeStart = TimeOfDay 18 30 0
         , timeEnd = TimeOfDay 21 30 0
         , subject =
             "Философские вопросы естествознания, социальных и гуманитарных наук"
         }
+    | m :- d <-
+        [ Nov :- 1, Nov :- 16, Nov :- 30
+        , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
+        ]
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
@@ -95,3 +102,13 @@ classEvent cls@Class{day, subject, timeEnd, timeStart} = ((uid, Nothing), event)
         { dateTimeFloating = LocalTime{localDay, localTimeOfDay}
         , dateTimeZone = "MSK"
         }
+
+pattern (:-) :: a -> b -> (a, b)
+pattern a :- b = (a, b)
+
+data Month =
+    Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec
+    deriving (Enum)
+
+monthNumber :: Month -> Int
+monthNumber = succ . fromEnum
