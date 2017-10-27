@@ -9,22 +9,24 @@
 
 module Main (main, Month (..)) where
 
-import qualified Data.ByteString.Lazy.Char8 as BS
-import           Data.Default               (def)
-import           Data.Hashable              (Hashable, hash)
-import qualified Data.Map                   as Map
-import           Data.Semigroup             ((<>))
-import           Data.Text.Lazy             (Text)
-import qualified Data.Text.Lazy             as Text
-import           Data.Time                  (Day (..), LocalTime (..),
-                                             TimeOfDay (..), fromGregorian)
-import           Data.Time.Clock.POSIX      (posixSecondsToUTCTime)
-import           GHC.Generics               (Generic)
-import           Text.ICalendar             (DTEnd (..), DTStamp (..),
-                                             DTStart (..), DateTime (..),
-                                             Description (..), Summary (..),
-                                             UID (..), VCalendar (..),
-                                             VEvent (..), printICalendar)
+import qualified Data.ByteString.Lazy.Char8     as BS
+import           Data.Default                   (def)
+import           Data.Hashable                  (Hashable, hash)
+import qualified Data.Map                       as Map
+import           Data.Semigroup                 ((<>))
+import           Data.Text.Lazy                 (Text)
+import qualified Data.Text.Lazy                 as Text
+import           Data.Time                      (Day (..), LocalTime (..),
+                                                 TimeOfDay (..), fromGregorian)
+import           Data.Time.Calendar.OrdinalDate (mondayStartWeek)
+import           Data.Time.Clock.POSIX          (posixSecondsToUTCTime)
+import           GHC.Generics                   (Generic)
+import           Text.ICalendar                 (DTEnd (..), DTStamp (..),
+                                                 DTStart (..), DateTime (..),
+                                                 Description (..),
+                                                 Location (..), Summary (..),
+                                                 UID (..), VCalendar (..),
+                                                 VEvent (..), printICalendar)
 
 main :: IO ()
 main = BS.putStrLn $
@@ -37,6 +39,7 @@ deriving instance Hashable TimeOfDay
 
 data Class = Class
     { day       :: Day
+    , room      :: Text
     , subject   :: Text
     , teacher   :: Text
     , timeEnd   :: TimeOfDay
@@ -47,21 +50,26 @@ data Class = Class
 classes :: [Class]
 classes =
     [ Class
-        { day = fromGregorian 2017 (monthNumber m) d
+        { day
         , timeStart = TimeOfDay 18 30 0
         , timeEnd = TimeOfDay 21 30 0
         , subject =
             "Философские вопросы естествознания, социальных и гуманитарных наук"
         , teacher = "Петруня О. Э."
+        , room = case weekDay day of
+            3  -> "319А"
+            4  -> "318А"
+            wd -> error $ show wd
         }
     | m :- d <-
         [ Nov :- 1, Nov :- 16, Nov :- 30
         , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
         ]
+    , let day = fromGregorian 2017 (monthNumber m) d
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
-classEvent cls@Class{day, subject, teacher, timeEnd, timeStart} =
+classEvent cls@Class{day, room, subject, teacher, timeEnd, timeStart} =
     ((uid, Nothing), event)
   where
     uid = Text.pack $ show $ hash cls
@@ -85,11 +93,16 @@ classEvent cls@Class{day, subject, teacher, timeEnd, timeStart} =
             , descriptionLanguage = def
             , descriptionOther = def
             }
+        , veLocation = Just Location
+            { locationValue = "аудитория " <> room
+            , locationAltRep = def
+            , locationLanguage = def
+            , locationOther = def
+            }
         , veClass = def
         , veCreated = def
         , veGeo = def
         , veLastMod = def
-        , veLocation = def
         , veOrganizer = def
         , vePriority = def
         , veSeq = def
@@ -125,3 +138,6 @@ data Month =
 
 monthNumber :: Month -> Int
 monthNumber = succ . fromEnum
+
+weekDay :: Day -> Int
+weekDay = snd . mondayStartWeek
