@@ -6,6 +6,8 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE PatternSynonyms    #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE ViewPatterns       #-}
 
 module Main (main, Month (..)) where
 
@@ -39,14 +41,14 @@ deriving instance Hashable TimeOfDay
 
 data Class = Class
     { address   :: Text
-    , day       :: Day
+    , day       :: Month :- DayOfMonth
     , room      :: Text
     , subject   :: Text
     , teacher   :: Text
     , timeEnd   :: TimeOfDay
     , timeStart :: TimeOfDay
     }
-    deriving (Generic, Hashable, Show)
+    deriving (Generic, Hashable)
 
 classes :: [Class]
 classes = concat
@@ -57,20 +59,19 @@ classes = concat
             , subject =
                 "Философские вопросы естествознания, социальных и гуманитарных наук"
             , teacher = "Петруня О. Э."
-            , room = case weekDay day of
+            , room = case dayOfWeek day of
                 3  -> "319А"
                 4  -> "318А"
                 wd -> error $ show wd
             , address = "м. Молодёжная"
             }
-        | m :- d <-
+        | day <-
             [ Nov :- 01, Nov :- 16, Nov :- 30
             , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
             ]
-        , let day = fromGregorian 2017 (monthNumber m) d
         ]
     ,   [ Class
-            { day = fromGregorian 2017 (monthNumber m) d
+            { day
             , timeStart = timeOfDay start
             , timeEnd = timeOfDay end
             , subject = "История и методология информатики"
@@ -78,7 +79,7 @@ classes = concat
             , room = "623 или 624"
             , address = "м. Таганская, Берниковская наб., 14"
             }
-        | m :- d :- (start, end) <-
+        | day :- (start, end) <-
             [ Nov :- 25 :- (16 :- 30, 21 :- 30)
             , Dec :- 16 :- (16 :- 30, 19 :- 45)
             , Dec :- 23 :- (16 :- 30, 21 :- 30)
@@ -86,7 +87,7 @@ classes = concat
             ]
         ]
     ,   [ Class
-            { day = fromGregorian 2017 (monthNumber m) d
+            { day
             , timeStart = timeOfDay start
             , timeEnd = timeOfDay end
             , subject = "Компьютерные технологии в науке и образовании"
@@ -94,7 +95,7 @@ classes = concat
             , room = "623 или 624"
             , address = "м. Таганская, Берниковская наб., 14"
             }
-        | m :- d :- (start, end) <-
+        | day :- (start, end) <-
             [ Nov :- 11 :- (16 :- 30, 21 :- 30)
             , Dec :- 16 :- (20 :- 00, 21 :- 35)
             ]
@@ -102,9 +103,17 @@ classes = concat
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
-classEvent cls@Class{address, day, room, subject, teacher, timeEnd, timeStart} =
-    uid :- Nothing :- event
+classEvent cls = uid :- Nothing :- event
   where
+    Class   { address
+            , day = (realDay -> day)
+            , room
+            , subject
+            , teacher
+            , timeEnd
+            , timeStart
+            } =
+        cls
     uid = Text.pack $ show $ hash cls
     event = VEvent
         { veDTStamp =
@@ -163,15 +172,24 @@ classEvent cls@Class{address, day, room, subject, teacher, timeEnd, timeStart} =
 pattern (:-) :: a -> b -> (a, b)
 pattern a :- b = (a, b)
 
+type a :- b = (a, b)
+
 data Month =
     Jan | Feb | Mar | Apr | May | Jun | Jul | Aug | Sep | Oct | Nov | Dec
-    deriving (Enum)
+    deriving (Enum, Generic, Hashable)
 
 monthNumber :: Month -> Int
 monthNumber = succ . fromEnum
 
-weekDay :: Day -> Int
-weekDay = snd . mondayStartWeek
+dayOfWeek :: Month :- DayOfMonth -> Int
+dayOfWeek = snd . mondayStartWeek . realDay
 
-timeOfDay :: (Int, Int) -> TimeOfDay
+timeOfDay :: SimpleTime -> TimeOfDay
 timeOfDay (hh, mm) = TimeOfDay hh mm 00
+
+realDay :: Month :- DayOfMonth -> Day
+realDay (m, d) = fromGregorian 2017 (monthNumber m) d
+
+type DayOfMonth = Int
+
+type SimpleTime = Int :- Int
