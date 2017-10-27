@@ -88,13 +88,13 @@ theClasses =
                 ]
         }
     , ClassSeries
-        { base = taganskaya
-        , subject = "Компьютерные технологии в науке и образовании"
+        { subject = "Компьютерные технологии в науке и образовании"
         , teacher = semenov
+        , base = taganskaya
         , classes =
             map (Class "623 или 624")
                 [ Nov :- 11 :- (16 :- 30, 21 :- 30)
-                , Dec :- 16 :- (20 :- 00, 21 :- 35)
+                , Dec :- 16 :- (20 :- 00, 21 :- 30)
                 ]
         }
     , ClassSeries
@@ -103,8 +103,18 @@ theClasses =
         , base = molodyozhnaya
         , classes =
             map (Class "411В")
-                [ Nov :- 11 :- (16 :- 30, 21 :- 30)
-                , Dec :- 16 :- (20 :- 00, 21 :- 35)
+                [ Dec :- 02 :- (14 :- 45, 19 :- 45)
+                , Dec :- 09 :- (13 :- 00, 19 :- 45)
+                ]
+        }
+    , ClassSeries
+        { subject = "Сетевые проблемно-ориентированные системы (фактически Си)"
+        , teacher = "Кейно Павел Петрович"
+        , base = molodyozhnaya
+        , classes =
+            map (Class "413В")
+                [ Oct :- 21 :- (14 :- 45, 18 :- 00)
+                , Oct :- 28 :- (16 :- 30, 21 :- 30)
                 ]
         }
     ]
