@@ -1,0 +1,5 @@
+extra-deps:
+  - iCalendar-0.4.0.3
+  - mime-0.4.0.2
+
+resolver: lts-9.10

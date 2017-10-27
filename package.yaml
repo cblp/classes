@@ -1,0 +1,15 @@
+name: classes
+
+dependencies:
+  - base
+  - bytestring
+  - containers
+  - data-default
+  - hashable
+  - iCalendar
+  - text
+  - time
+
+executables:
+  classes:
+    main: Main.hs
