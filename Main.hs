@@ -60,7 +60,7 @@ theClasses =
         { subject =
             "Философские вопросы естествознания, социальных и гуманитарных наук"
         , teacher = "Петруня О. Э."
-        , base = "м. Молодёжная"
+        , base = molodyozhnaya
         , classes =
             [ Class
                 { room = case dayOfWeek day of
@@ -97,8 +97,19 @@ theClasses =
                 , Dec :- 16 :- (20 :- 00, 21 :- 35)
                 ]
         }
+    , ClassSeries
+        { subject = "Исполнительные механизмы автоматических систем"
+        , teacher = "Николаев П. Л."
+        , base = molodyozhnaya
+        , classes =
+            map (Class "411В")
+                [ Nov :- 11 :- (16 :- 30, 21 :- 30)
+                , Dec :- 16 :- (20 :- 00, 21 :- 35)
+                ]
+        }
     ]
   where
+    molodyozhnaya = "м. Молодёжная"
     taganskaya = "м. Таганская, Берниковская наб., 14"
     semenov = "Семенов Г. А."
 
