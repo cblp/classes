@@ -49,25 +49,42 @@ data Class = Class
     deriving (Generic, Hashable, Show)
 
 classes :: [Class]
-classes =
-    [ Class
-        { day
-        , timeStart = TimeOfDay 18 30 0
-        , timeEnd = TimeOfDay 21 30 0
-        , subject =
-            "Философские вопросы естествознания, социальных и гуманитарных наук"
-        , teacher = "Петруня О. Э."
-        , room = case weekDay day of
-            3  -> "319А"
-            4  -> "318А"
-            wd -> error $ show wd
-        , address = "м. Молодёжная"
-        }
-    | m :- d <-
-        [ Nov :- 1, Nov :- 16, Nov :- 30
-        , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
+classes = concat
+    [   [ Class
+            { day
+            , timeStart = timeOfDay (18, 30)
+            , timeEnd = timeOfDay (21, 30)
+            , subject =
+                "Философские вопросы естествознания, социальных и гуманитарных наук"
+            , teacher = "Петруня О. Э."
+            , room = case weekDay day of
+                3  -> "319А"
+                4  -> "318А"
+                wd -> error $ show wd
+            , address = "м. Молодёжная"
+            }
+        | m :- d <-
+            [ Nov :- 01, Nov :- 16, Nov :- 30
+            , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
+            ]
+        , let day = fromGregorian 2017 (monthNumber m) d
         ]
-    , let day = fromGregorian 2017 (monthNumber m) d
+    ,   [ Class
+            { day = fromGregorian 2017 (monthNumber m) d
+            , timeStart = timeOfDay start
+            , timeEnd = timeOfDay end
+            , subject = "История и методология информатики"
+            , teacher = "Семенов Г. А."
+            , room = "623 или 624"
+            , address = "м. Таганская, Берниковская наб., 14"
+            }
+        | m :- d :- (start, end) <-
+            [ Nov :- 25 :- (16 :- 30, 21 :- 30)
+            , Dec :- 16 :- (16 :- 30, 19 :- 45)
+            , Dec :- 23 :- (16 :- 30, 21 :- 30)
+            , Dec :- 30 :- (09 :- 00, 14 :- 30)
+            ]
+        ]
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
@@ -76,8 +93,8 @@ classEvent cls@Class{address, day, room, subject, teacher, timeEnd, timeStart} =
   where
     uid = Text.pack $ show $ hash cls
     event = VEvent
-        { veDTStamp = DTStamp
-            {dtStampValue = posixSecondsToUTCTime 0, dtStampOther = def}
+        { veDTStamp =
+            DTStamp{dtStampValue = posixSecondsToUTCTime 0, dtStampOther = def}
         , veUID = UID{uidValue = uid, uidOther = def}
         , veDTStart = Just DTStartDateTime
             {dtStartDateTimeValue = dateTime day timeStart, dtStartOther = def}
@@ -141,3 +158,6 @@ monthNumber = succ . fromEnum
 
 weekDay :: Day -> Int
 weekDay = snd . mondayStartWeek
+
+timeOfDay :: (Int, Int) -> TimeOfDay
+timeOfDay (hh, mm) = TimeOfDay hh mm 00
