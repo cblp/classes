@@ -45,8 +45,8 @@ data Class = Class
     , room      :: Text
     , subject   :: Text
     , teacher   :: Text
-    , timeEnd   :: TimeOfDay
-    , timeStart :: TimeOfDay
+    , timeEnd   :: SimpleTime
+    , timeStart :: SimpleTime
     }
     deriving (Generic, Hashable)
 
@@ -54,8 +54,8 @@ classes :: [Class]
 classes = concat
     [   [ Class
             { day
-            , timeStart = timeOfDay (18, 30)
-            , timeEnd = timeOfDay (21, 30)
+            , timeStart = 18 :- 30
+            , timeEnd = 21 :- 30
             , subject =
                 "Философские вопросы естествознания, социальных и гуманитарных наук"
             , teacher = "Петруня О. Э."
@@ -72,14 +72,14 @@ classes = concat
         ]
     ,   [ Class
             { day
-            , timeStart = timeOfDay start
-            , timeEnd = timeOfDay end
+            , timeStart
+            , timeEnd
             , subject = "История и методология информатики"
             , teacher = "Семенов Г. А."
             , room = "623 или 624"
             , address = "м. Таганская, Берниковская наб., 14"
             }
-        | day :- (start, end) <-
+        | day :- (timeStart, timeEnd) <-
             [ Nov :- 25 :- (16 :- 30, 21 :- 30)
             , Dec :- 16 :- (16 :- 30, 19 :- 45)
             , Dec :- 23 :- (16 :- 30, 21 :- 30)
@@ -88,14 +88,14 @@ classes = concat
         ]
     ,   [ Class
             { day
-            , timeStart = timeOfDay start
-            , timeEnd = timeOfDay end
+            , timeStart
+            , timeEnd
             , subject = "Компьютерные технологии в науке и образовании"
             , teacher = "Семенов Г. А."
             , room = "623 или 624"
             , address = "м. Таганская, Берниковская наб., 14"
             }
-        | day :- (start, end) <-
+        | day :- (timeStart, timeEnd) <-
             [ Nov :- 11 :- (16 :- 30, 21 :- 30)
             , Dec :- 16 :- (20 :- 00, 21 :- 35)
             ]
@@ -110,8 +110,8 @@ classEvent cls = uid :- Nothing :- event
             , room
             , subject
             , teacher
-            , timeEnd
-            , timeStart
+            , timeEnd   = (timeOfDay -> timeEnd)
+            , timeStart = (timeOfDay -> timeStart)
             } =
         cls
     uid = Text.pack $ show $ hash cls
