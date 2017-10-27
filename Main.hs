@@ -85,6 +85,20 @@ classes = concat
             , Dec :- 30 :- (09 :- 00, 14 :- 30)
             ]
         ]
+    ,   [ Class
+            { day = fromGregorian 2017 (monthNumber m) d
+            , timeStart = timeOfDay start
+            , timeEnd = timeOfDay end
+            , subject = "Компьютерные технологии в науке и образовании"
+            , teacher = "Семенов Г. А."
+            , room = "623 или 624"
+            , address = "м. Таганская, Берниковская наб., 14"
+            }
+        | m :- d :- (start, end) <-
+            [ Nov :- 11 :- (16 :- 30, 21 :- 30)
+            , Dec :- 16 :- (20 :- 00, 21 :- 35)
+            ]
+        ]
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
