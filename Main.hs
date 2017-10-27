@@ -7,7 +7,6 @@
 {-# LANGUAGE PatternSynonyms    #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators      #-}
-{-# LANGUAGE ViewPatterns       #-}
 
 module Main (main, Month (..)) where
 
@@ -32,97 +31,90 @@ import           Text.ICalendar                 (DTEnd (..), DTStamp (..),
 
 main :: IO ()
 main = BS.putStrLn $
-    printICalendar def def{vcEvents = Map.fromList $ map classEvent classes}
+    printICalendar
+        def
+        def{vcEvents = Map.fromList $ foldMap classEvents theClasses}
 
 deriving instance Generic Day
 deriving instance Generic TimeOfDay
 deriving instance Hashable Day
 deriving instance Hashable TimeOfDay
 
-data Class = Class
-    { address   :: Text
-    , day       :: Month :- DayOfMonth
-    , room      :: Text
-    , subject   :: Text
-    , teacher   :: Text
-    , timeEnd   :: SimpleTime
-    , timeStart :: SimpleTime
+data ClassSeries = ClassSeries
+    { base    :: Text
+    , classes :: [Class]
+    , subject :: Text
+    , teacher :: Text
     }
     deriving (Generic, Hashable)
 
-classes :: [Class]
-classes = concat
-    [   [ Class
-            { day
-            , timeStart = 18 :- 30
-            , timeEnd = 21 :- 30
-            , subject =
-                "Философские вопросы естествознания, социальных и гуманитарных наук"
-            , teacher = "Петруня О. Э."
-            , room = case dayOfWeek day of
-                3  -> "319А"
-                4  -> "318А"
-                wd -> error $ show wd
-            , address = "м. Молодёжная"
-            }
-        | day <-
-            [ Nov :- 01, Nov :- 16, Nov :- 30
-            , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
+data Class = Class
+    { room     :: Text
+    , datetime :: SimpleDate :- (SimpleTime :- SimpleTime)
+    }
+    deriving (Generic, Hashable)
+
+theClasses :: [ClassSeries]
+theClasses =
+    [ ClassSeries
+        { subject =
+            "Философские вопросы естествознания, социальных и гуманитарных наук"
+        , teacher = "Петруня О. Э."
+        , base = "м. Молодёжная"
+        , classes =
+            [ Class
+                { room = case dayOfWeek day of
+                    3  -> "319А"
+                    4  -> "318А"
+                    wd -> error $ show wd
+                , datetime = day :- (18 :- 30, 21 :- 30)
+                }
+            | day <-
+                [ Nov :- 01, Nov :- 16, Nov :- 30
+                , Dec :- 13, Dec :- 14, Dec :- 27, Dec :- 28
+                ]
             ]
-        ]
-    ,   [ Class
-            { day
-            , timeStart
-            , timeEnd
-            , subject = "История и методология информатики"
-            , teacher = "Семенов Г. А."
-            , room = "623 или 624"
-            , address = "м. Таганская, Берниковская наб., 14"
-            }
-        | day :- (timeStart, timeEnd) <-
-            [ Nov :- 25 :- (16 :- 30, 21 :- 30)
-            , Dec :- 16 :- (16 :- 30, 19 :- 45)
-            , Dec :- 23 :- (16 :- 30, 21 :- 30)
-            , Dec :- 30 :- (09 :- 00, 14 :- 30)
-            ]
-        ]
-    ,   [ Class
-            { day
-            , timeStart
-            , timeEnd
-            , subject = "Компьютерные технологии в науке и образовании"
-            , teacher = "Семенов Г. А."
-            , room = "623 или 624"
-            , address = "м. Таганская, Берниковская наб., 14"
-            }
-        | day :- (timeStart, timeEnd) <-
-            [ Nov :- 11 :- (16 :- 30, 21 :- 30)
-            , Dec :- 16 :- (20 :- 00, 21 :- 35)
-            ]
-        ]
+        }
+    , ClassSeries
+        { subject = "История и методология информатики"
+        , teacher = "Семенов Г. А."
+        , base = "м. Таганская, Берниковская наб., 14"
+        , classes =
+            map (Class "623 или 624")
+                [ Nov :- 25 :- (16 :- 30, 21 :- 30)
+                , Dec :- 16 :- (16 :- 30, 19 :- 45)
+                , Dec :- 23 :- (16 :- 30, 21 :- 30)
+                , Dec :- 30 :- (09 :- 00, 14 :- 30)
+                ]
+        }
+    , ClassSeries
+        { base = "м. Таганская, Берниковская наб., 14"
+        , subject = "Компьютерные технологии в науке и образовании"
+        , teacher = "Семенов Г. А."
+        , classes =
+            map (Class "623 или 624")
+                [ Nov :- 11 :- (16 :- 30, 21 :- 30)
+                , Dec :- 16 :- (20 :- 00, 21 :- 35)
+                ]
+        }
     ]
 
-classEvent :: Class -> ((Text, Maybe a), VEvent)
-classEvent cls = uid :- Nothing :- event
+classEvents :: ClassSeries -> [Text :- Maybe a :- VEvent]
+classEvents series@ClassSeries{base, subject, teacher, classes} =
+    [ uidValue (veUID event) :- Nothing :- event
+    | datetime <- classes
+    , let event = makeEvent datetime
+    ]
   where
-    Class   { address
-            , day = (realDay -> day)
-            , room
-            , subject
-            , teacher
-            , timeEnd   = (timeOfDay -> timeEnd)
-            , timeStart = (timeOfDay -> timeStart)
-            } =
-        cls
-    uid = Text.pack $ show $ hash cls
-    event = VEvent
+    makeEvent cls@Class{datetime = (day, (start, end)), room} = VEvent
         { veDTStamp =
             DTStamp{dtStampValue = posixSecondsToUTCTime 0, dtStampOther = def}
-        , veUID = UID{uidValue = uid, uidOther = def}
+        , veUID = UID
+            {uidValue = Text.pack . show $ hash (series, cls), uidOther = def}
         , veDTStart = Just DTStartDateTime
-            {dtStartDateTimeValue = dateTime day timeStart, dtStartOther = def}
+            {dtStartDateTimeValue = dateTime start, dtStartOther = def}
         , veDTEndDuration = Just $ Left DTEndDateTime
-            {dtEndDateTimeValue = dateTime day timeEnd, dtEndOther = def}
+            {dtEndDateTimeValue = dateTime end, dtEndOther = def}
         , veSummary = Just Summary
             { summaryValue = subject
             , summaryAltRep = def
@@ -136,7 +128,7 @@ classEvent cls = uid :- Nothing :- event
             , descriptionOther = def
             }
         , veLocation = Just Location
-            { locationValue = address <> ", аудитория " <> room
+            { locationValue = base <> ", аудитория " <> room
             , locationAltRep = def
             , locationLanguage = def
             , locationOther = def
@@ -166,8 +158,12 @@ classEvent cls = uid :- Nothing :- event
         , veAlarms = def
         , veOther = def
         }
-    dateTime localDay localTimeOfDay =
-        FloatingDateTime{dateTimeFloating = LocalTime{localDay, localTimeOfDay}}
+      where
+        dateTime :: SimpleTime -> DateTime
+        dateTime time = FloatingDateTime
+            { dateTimeFloating = LocalTime
+                {localDay = realDay day, localTimeOfDay = timeOfDay time}
+            }
 
 pattern (:-) :: a -> b -> (a, b)
 pattern a :- b = (a, b)
@@ -181,15 +177,17 @@ data Month =
 monthNumber :: Month -> Int
 monthNumber = succ . fromEnum
 
-dayOfWeek :: Month :- DayOfMonth -> Int
+dayOfWeek :: SimpleDate -> Int
 dayOfWeek = snd . mondayStartWeek . realDay
 
 timeOfDay :: SimpleTime -> TimeOfDay
 timeOfDay (hh, mm) = TimeOfDay hh mm 00
 
-realDay :: Month :- DayOfMonth -> Day
+realDay :: SimpleDate -> Day
 realDay (m, d) = fromGregorian 2017 (monthNumber m) d
 
 type DayOfMonth = Int
+
+type SimpleDate = Month :- DayOfMonth
 
 type SimpleTime = Int :- Int
