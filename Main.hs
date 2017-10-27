@@ -77,8 +77,8 @@ theClasses =
         }
     , ClassSeries
         { subject = "История и методология информатики"
-        , teacher = "Семенов Г. А."
-        , base = "м. Таганская, Берниковская наб., 14"
+        , teacher = semenov
+        , base = taganskaya
         , classes =
             map (Class "623 или 624")
                 [ Nov :- 25 :- (16 :- 30, 21 :- 30)
@@ -88,9 +88,9 @@ theClasses =
                 ]
         }
     , ClassSeries
-        { base = "м. Таганская, Берниковская наб., 14"
+        { base = taganskaya
         , subject = "Компьютерные технологии в науке и образовании"
-        , teacher = "Семенов Г. А."
+        , teacher = semenov
         , classes =
             map (Class "623 или 624")
                 [ Nov :- 11 :- (16 :- 30, 21 :- 30)
@@ -98,6 +98,9 @@ theClasses =
                 ]
         }
     ]
+  where
+    taganskaya = "м. Таганская, Берниковская наб., 14"
+    semenov = "Семенов Г. А."
 
 classEvents :: ClassSeries -> [Text :- Maybe a :- VEvent]
 classEvents series@ClassSeries{base, subject, teacher, classes} =
