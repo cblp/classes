@@ -126,10 +126,8 @@ classEvent cls@Class{address, day, room, subject, teacher, timeEnd, timeStart} =
         , veAlarms = def
         , veOther = def
         }
-    dateTime localDay localTimeOfDay = ZonedDateTime
-        { dateTimeFloating = LocalTime{localDay, localTimeOfDay}
-        , dateTimeZone = "MSK"
-        }
+    dateTime localDay localTimeOfDay =
+        FloatingDateTime{dateTimeFloating = LocalTime{localDay, localTimeOfDay}}
 
 pattern (:-) :: a -> b -> (a, b)
 pattern a :- b = (a, b)
