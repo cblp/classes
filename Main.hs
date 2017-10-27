@@ -38,7 +38,8 @@ deriving instance Hashable Day
 deriving instance Hashable TimeOfDay
 
 data Class = Class
-    { day       :: Day
+    { address   :: Text
+    , day       :: Day
     , room      :: Text
     , subject   :: Text
     , teacher   :: Text
@@ -60,6 +61,7 @@ classes =
             3  -> "319А"
             4  -> "318А"
             wd -> error $ show wd
+        , address = "м. Молодёжная"
         }
     | m :- d <-
         [ Nov :- 1, Nov :- 16, Nov :- 30
@@ -69,8 +71,8 @@ classes =
     ]
 
 classEvent :: Class -> ((Text, Maybe a), VEvent)
-classEvent cls@Class{day, room, subject, teacher, timeEnd, timeStart} =
-    ((uid, Nothing), event)
+classEvent cls@Class{address, day, room, subject, teacher, timeEnd, timeStart} =
+    uid :- Nothing :- event
   where
     uid = Text.pack $ show $ hash cls
     event = VEvent
@@ -94,7 +96,7 @@ classEvent cls@Class{day, room, subject, teacher, timeEnd, timeStart} =
             , descriptionOther = def
             }
         , veLocation = Just Location
-            { locationValue = "аудитория " <> room
+            { locationValue = address <> ", аудитория " <> room
             , locationAltRep = def
             , locationLanguage = def
             , locationOther = def
