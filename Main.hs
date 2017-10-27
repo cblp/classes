@@ -99,7 +99,7 @@ theClasses =
         }
     , ClassSeries
         { subject = "Исполнительные механизмы автоматических систем"
-        , teacher = "Николаев П. Л."
+        , teacher = nikolayev
         , base = molodyozhnaya
         , classes =
             map (Class "411В")
@@ -117,10 +117,22 @@ theClasses =
                 , Oct :- 28 :- (16 :- 30, 21 :- 30)
                 ]
         }
+    , ClassSeries
+        { subject = "Структурированные кабельные системы"
+        , teacher = nikolayev
+        , base = molodyozhnaya
+        , classes =
+            map (Class "411В")
+                [ Oct :- 14 :- (13 :- 00, 16 :- 15)
+                , Nov :- 18 :- (16 :- 30, 21 :- 30)
+                , Dec :- 02 :- (13 :- 00, 14 :- 30)
+                ]
+        }
     ]
   where
     molodyozhnaya = "м. Молодёжная"
     taganskaya = "м. Таганская, Берниковская наб., 14"
+    nikolayev = "Николаев П. Л."
     semenov = "Семенов Г. А."
 
 classEvents :: ClassSeries -> [Text :- Maybe a :- VEvent]
